@@ -1,0 +1,121 @@
+
+// Switch to your database
+use yourDatabaseName; // Replace 'yourDatabaseName' with your database name
+
+// 1. Find all the topics and tasks which are taught in the month of October
+print("\n1. Topics and tasks taught in October:");
+db.topics.aggregate([
+    {
+        $lookup: {
+            from: "tasks",
+            localField: "topic_id",
+            foreignField: "topic_id",
+            as: "related_tasks"
+        }
+    },
+    {
+        $match: {
+            topic_date: {
+                $gte: new Date("2020-10-01"),
+                $lte: new Date("2020-10-31")
+            }
+        }
+    }
+]).forEach(printjson);
+
+// 2. Find all the company drives which appeared between 15-Oct-2020 and 31-Oct-2020
+print("\n2. Company drives between 15-Oct-2020 and 31-Oct-2020:");
+db.company_drives.find({
+    drive_date: {
+        $gte: new Date("2020-10-15"),
+        $lte: new Date("2020-10-31")
+    }
+}).forEach(printjson);
+
+// 3. Find all the company drives and students who appeared for the placement
+print("\n3. Company drives and students appeared for placement:");
+db.company_drives.aggregate([
+    {
+        $lookup: {
+            from: "users",
+            localField: "drive_id",
+            foreignField: "applied_drive_id",
+            as: "students_appeared"
+        }
+    }
+]).forEach(printjson);
+
+// 4. Find the number of problems solved by the user in CodeKata
+print("\n4. Number of problems solved by each user in CodeKata:");
+db.codekata.aggregate([
+    {
+        $group: {
+            _id: "$user_id",
+            total_problems_solved: { $sum: "$problems_solved" }
+        }
+    }
+]).forEach(printjson);
+
+// 5. Find all the mentors who have mentee counts more than 15
+print("\n5. Mentors with mentee counts greater than 15:");
+db.mentors.find({
+    mentee_count: { $gt: 15 }
+}).forEach(printjson);
+
+// 6. Find the number of users who are absent and tasks not submitted between 15-Oct-2020 and 31-Oct-2020
+print("\n6. Number of users who are absent and tasks not submitted:");
+db.attendance.aggregate([
+    {
+        $match: {
+            date: {
+                $gte: new Date("2020-10-15"),
+                $lte: new Date("2020-10-31")
+            },
+            status: "absent"
+        }
+    },
+    {
+        $lookup: {
+            from: "tasks",
+            localField: "user_id",
+            foreignField: "user_id",
+            as: "tasks_status"
+        }
+    },
+    {
+        $match: {
+            "tasks_status.submission_status": "not submitted"
+        }
+    },
+    {
+        $group: {
+            _id: null,
+            count: { $sum: 1 }
+        }
+    }
+]).forEach(printjson);
+
+Steps to Execute:
+1. Prepare Your MongoDB Database: Ensure that the database and collections (`topics`, `tasks`, `company_drives`, `users`, `codekata`, `mentors`, and `attendance`) are properly created and populated with relevant data.
+   
+2. Update the Database Name: Replace `yourDatabaseName` in the script with your actual database name.
+
+3. Run the Script:
+   - Copy the script into your MongoDB shell or MongoDB IDE (e.g., Compass).
+   - Execute it, and the results for each query will be displayed.
+
+
+I attempted to execute the following MongoDB queries for the Zen class program tasks, but they did not work as expected. Here's the combined code I used:
+
+
+
+However, I encountered issues while running the script. The database and collections have the following structure:
+- `topics`: Contains fields `topic_id`, `topic_date`, etc.
+- `tasks`: Contains fields `topic_id`, `user_id`, `submission_status`, etc.
+- `company_drives`: Contains fields `drive_id`, `drive_date`, etc.
+- `users`: Contains fields `user_id`, `applied_drive_id`, etc.
+- `codekata`: Contains fields `user_id`, `problems_solved`, etc.
+- `mentors`: Contains fields `mentor_id`, `mentee_count`, etc.
+- `attendance`: Contains fields `user_id`, `date`, `status`, etc.
+
+Could you help identify any issues with the queries or suggest corrections?
